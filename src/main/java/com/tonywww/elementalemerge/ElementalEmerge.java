@@ -3,6 +3,8 @@ package com.tonywww.elementalemerge;
 import com.mojang.logging.LogUtils;
 import com.tonywww.elementalemerge.event.TickHandler;
 import com.tonywww.elementalemerge.persist.AllElementsWorldStorage;
+import com.tonywww.elementalemerge.registeries.ModCreativeModTabs;
+import com.tonywww.elementalemerge.registeries.ModItems;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -12,6 +14,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.cyclops.cyclopscore.init.ModBaseVersionable;
 import org.cyclops.cyclopscore.proxy.ClientProxy;
 import org.cyclops.cyclopscore.proxy.CommonProxy;
@@ -31,7 +34,10 @@ public class ElementalEmerge extends ModBaseVersionable<ElementalEmerge> {
     public ElementalEmerge() {
         super(MOD_ID, (instance) -> _instance = instance);
 
-        registerWorldStorage(AllElementsWorldStorage.getInstance(this));
+        IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
+
+        ModItems.register(eventBus);
+        ModCreativeModTabs.register(eventBus);
 
     }
 

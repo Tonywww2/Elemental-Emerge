@@ -39,12 +39,25 @@ minecraft {
 
         client {
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
+            workingDirectory project.file('run')
             property 'forge.enabledGameTestNamespaces', mod_id
+            mods {
+                elementalemerge {
+                    source sourceSets.main
+                }
+            }
         }
 
         server {
             property 'forge.enabledGameTestNamespaces', mod_id
             args '--nogui'
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                elementalemerge {
+                    source sourceSets.main
+                }
+            }
         }
 
         gameTestServer {

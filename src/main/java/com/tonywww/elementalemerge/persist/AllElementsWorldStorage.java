@@ -19,12 +19,15 @@ public class AllElementsWorldStorage extends WorldStorage {
     private Map<BlockPos, BasicElement> allElements = new HashMap<>();
 
     // 待处理的元素
+    @NBTPersist
     private Stack<BasicElement> processingStack = new Stack<>();
 
     // 已访问的位置
+    @NBTPersist
     private Set<BlockPos> visitedPositions = new HashSet<>();
 
     // 将在RESET_TICKS后重置的位置
+    @NBTPersist
     private List<BlockPos>[] toResetPositions = new ArrayList[RESET_TICKS + 1];
     {
         for (int i = 0; i <= RESET_TICKS; i++) {
@@ -55,7 +58,7 @@ public class AllElementsWorldStorage extends WorldStorage {
         for (BlockPos pos : positions) {
             this.markAsNotVisited(pos);
         }
-        this.setToResetPositions(tick);
+        this.resetToResetPositions(tick);
     }
 
 
@@ -67,7 +70,7 @@ public class AllElementsWorldStorage extends WorldStorage {
         return allElements.get(pos);
     }
 
-    private synchronized BasicElement popElementFromProcessingStack() {
+    public synchronized BasicElement popElementFromProcessingStack() {
         if (hasElementsToProcess()) {
             return this.processingStack.pop();
         }
@@ -86,7 +89,7 @@ public class AllElementsWorldStorage extends WorldStorage {
         return this.toResetPositions[tick % (RESET_TICKS + 1)];
     }
 
-    private synchronized void setToResetPositions(int tick) {
+    private synchronized void resetToResetPositions(int tick) {
         this.toResetPositions[tick % (RESET_TICKS + 1)] = new ArrayList<>(RESET_POS_INIT_CAP);
     }
 
@@ -98,7 +101,7 @@ public class AllElementsWorldStorage extends WorldStorage {
         this.processingStack.push(element);
     }
 
-    private synchronized boolean hasElementsToProcess() {
+    public synchronized boolean hasElementsToProcess() {
         return !processingStack.isEmpty();
     }
 

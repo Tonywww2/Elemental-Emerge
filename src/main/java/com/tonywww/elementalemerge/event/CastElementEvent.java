@@ -10,4 +10,7 @@ public class CastElementEvent extends Event {
         this.element = element;
     }
 
+    public BasicElement getElement() {
+        return element;
+    }
 }
