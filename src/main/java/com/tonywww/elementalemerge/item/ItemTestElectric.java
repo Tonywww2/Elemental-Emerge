@@ -13,9 +13,7 @@ public class ItemTestElectric extends Item {
 
     @Override
     public InteractionResult useOn(UseOnContext context) {
-        System.out.println("LOG TEST");
         if (context.getLevel() instanceof ServerLevel level) {
-            System.out.println("LOG TEST SERVER");
             ElectricElement element = new ElectricElement(context.getClickedPos(), (byte) context.getItemInHand().getCount(), level);
             element.castEvent();
 

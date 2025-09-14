@@ -19,6 +19,7 @@ public class ModCreativeModTabs {
                     .displayItems((pParameters, pOutput) -> {
                         pOutput.accept(ModItems.TEST_ELECTRIC.get());
 
+                        pOutput.accept(ModBlocks.TEST_CHARGEABLE.get());
                     })
                     .build());
 

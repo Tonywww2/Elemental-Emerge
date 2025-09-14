@@ -3,6 +3,7 @@ package com.tonywww.elementalemerge;
 import com.mojang.logging.LogUtils;
 import com.tonywww.elementalemerge.event.TickHandler;
 import com.tonywww.elementalemerge.persist.AllElementsWorldStorage;
+import com.tonywww.elementalemerge.registeries.ModBlocks;
 import com.tonywww.elementalemerge.registeries.ModCreativeModTabs;
 import com.tonywww.elementalemerge.registeries.ModItems;
 import net.minecraft.client.Minecraft;
@@ -37,6 +38,7 @@ public class ElementalEmerge extends ModBaseVersionable<ElementalEmerge> {
         IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         ModItems.register(eventBus);
+        ModBlocks.register(eventBus);
         ModCreativeModTabs.register(eventBus);
 
     }
