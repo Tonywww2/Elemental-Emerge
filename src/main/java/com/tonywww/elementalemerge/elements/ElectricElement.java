@@ -4,11 +4,11 @@ import com.tonywww.elementalemerge.block.ElementChargeableBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class ElectricElement extends BasicElement{
-
+public class ElectricElement extends BasicElement {
 
 
     public ElectricElement(BlockPos pos, byte power, ServerLevel level) {
@@ -22,7 +22,7 @@ public class ElectricElement extends BasicElement{
 //
 //        }
         if (this.level.getBlockState(this.pos).getBlock() instanceof ElementChargeableBlock) {
-            BlockState newState =  ElementChargeableBlock.setElementType(this.level.getBlockState(this.pos), ElementType.ELECTRIC, 1);
+            BlockState newState = ElementChargeableBlock.setElementType(this.level.getBlockState(this.pos), ElementType.ELECTRIC, 1);
             level.setBlock(pos, newState, 3);
         }
         this.level.sendParticles(
@@ -40,7 +40,8 @@ public class ElectricElement extends BasicElement{
     }
 
     @Override
-    public boolean doEntityEffects() {
+    public boolean doEntityEffects(Entity entity) {
+        entity.hurt(entity.damageSources().inFire(), 1f);
         return true;
     }
 

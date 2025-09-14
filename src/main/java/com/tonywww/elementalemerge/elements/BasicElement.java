@@ -3,6 +3,7 @@ package com.tonywww.elementalemerge.elements;
 import com.tonywww.elementalemerge.event.CastElementEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.MinecraftForge;
 
 import java.util.Objects;
@@ -20,7 +21,7 @@ public abstract class BasicElement {
 
     public abstract boolean doBlockEffects();
 
-    public abstract boolean doEntityEffects();
+    public abstract boolean doEntityEffects(Entity entity);
 
     /**
      * 获取扩散后的元素，当前元素的power应大于0，新元素的power应大于等于0

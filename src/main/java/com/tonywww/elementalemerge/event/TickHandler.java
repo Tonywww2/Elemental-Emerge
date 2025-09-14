@@ -5,8 +5,12 @@ import com.tonywww.elementalemerge.elements.BasicElement;
 import com.tonywww.elementalemerge.persist.AllElementsWorldStorage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.LogicalSide;
+
+import java.util.HashMap;
 
 import static org.cyclops.cyclopscore.helper.DirectionHelpers.DIRECTIONS;
 
@@ -30,9 +34,10 @@ public class TickHandler {
     }
 
     @SubscribeEvent
-    public void onTick(TickEvent event) {
-        if (event.type != TickEvent.Type.SERVER || event.phase != TickEvent.Phase.END) return;
+    public void onLevelTick(TickEvent.LevelTickEvent event) {
+        if (event.side != LogicalSide.SERVER || event.phase != TickEvent.Phase.END) return;
         int operationCount = 0;
+        HashMap<BlockPos, BasicElement> entityCheckPositions = new HashMap<>();
         AllElementsWorldStorage storage = AllElementsWorldStorage.getInstance(ElementalEmerge._instance);
 
         storage.resetPositions(tick - 1);
@@ -46,7 +51,7 @@ public class TickHandler {
 
             // 执行元素效果
             currentElement.doBlockEffects();
-            currentElement.doEntityEffects();
+            entityCheckPositions.put(currentElement.pos, currentElement);
 
             // 如果还有扩散能力，向周围扩散
             if (currentElement.power > 0) {
@@ -56,8 +61,16 @@ public class TickHandler {
             operationCount++;
         }
 
+        if (event.level instanceof ServerLevel serverLevel) {
+            serverLevel.getEntities().getAll().forEach(entity -> {
+                BlockPos entityPos = entity.blockPosition();
+                if (entityCheckPositions.containsKey(entityPos)) {
+                    entityCheckPositions.get(entityPos).doEntityEffects(entity);
+                }
+            });
+        }
 //        System.out.println("Processed " + operationCount + " operations this tick.");
-
+        entityCheckPositions.clear();
         this.tick++;
 
     }
