@@ -9,6 +9,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
+import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.server.ServerLifecycleHooks;
 
 import java.util.HashMap;
 
@@ -17,8 +19,8 @@ import static org.cyclops.cyclopscore.helper.DirectionHelpers.DIRECTIONS;
 public class TickHandler {
 
     private static TickHandler INSTANCE;
+
     private int tick = 1;
-    public boolean ticked = false;
 
     public static final int MAX_OPERATION_PER_TICK = 1000;
 
@@ -34,60 +36,73 @@ public class TickHandler {
     }
 
     @SubscribeEvent
-    public void onLevelTick(TickEvent.LevelTickEvent event) {
+    public void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.side != LogicalSide.SERVER || event.phase != TickEvent.Phase.END) return;
+
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null) return;
+
+        // 为每个维度分别处理
+        for (ServerLevel serverLevel : server.getAllLevels()) {
+            processElementsInLevel(serverLevel);
+        }
+        this.tick++;
+
+    }
+
+    private void processElementsInLevel(ServerLevel level) {
         int operationCount = 0;
         HashMap<BlockPos, BasicElement> entityCheckPositions = new HashMap<>();
         AllElementsWorldStorage storage = AllElementsWorldStorage.getInstance(ElementalEmerge._instance);
 
-        storage.resetPositions(tick - 1);
+        storage.resetPositions(level, tick - 1);
 
         while (operationCount < MAX_OPERATION_PER_TICK) {
-            BasicElement currentElement = storage.popElementFromProcessingStack();
+            BasicElement currentElement = storage.popElementFromProcessingStack(level);
             if (currentElement == null) break;
 
             // 标记为已访问
-            storage.markAsVisited(currentElement.pos);
+            storage.markAsVisited(level, currentElement.pos);
 
             // 执行元素效果
             currentElement.doBlockEffects();
             entityCheckPositions.put(currentElement.pos, currentElement);
 
-            // 如果还有扩散能力，向周围扩散
+            // 向周围扩散
             if (currentElement.power > 0) {
-                spreadToNeighbors(currentElement, storage);
+                spreadToNeighbors(currentElement, storage, level);
             }
 
             operationCount++;
         }
 
-        if (event.level instanceof ServerLevel serverLevel) {
-            serverLevel.getEntities().getAll().forEach(entity -> {
-                BlockPos entityPos = entity.blockPosition();
-                if (entityCheckPositions.containsKey(entityPos)) {
-                    entityCheckPositions.get(entityPos).doEntityEffects(entity);
-                }
-            });
-        }
-//        System.out.println("Processed " + operationCount + " operations this tick.");
-        entityCheckPositions.clear();
-        this.tick++;
+        // 处理当前维度的实体
+        level.getEntities().getAll().forEach(entity -> {
+            BlockPos entityPos = entity.blockPosition();
+            if (entityCheckPositions.containsKey(entityPos)) {
+                entityCheckPositions.get(entityPos).doEntityEffects(entity);
+            }
+        });
 
+        entityCheckPositions.clear();
     }
 
-    private void spreadToNeighbors(BasicElement element, AllElementsWorldStorage storage) {
+    private void spreadToNeighbors(BasicElement element, AllElementsWorldStorage storage, ServerLevel level) {
         for (Direction direction : DIRECTIONS) {
             BlockPos neighborPos = element.pos.relative(direction);
 
-            if (!storage.isVisited(neighborPos) && storage.getElementAt(neighborPos) == null) {
-                // 创建新的扩散元素（power减1）
-                spreadElementToPosition(element, neighborPos, storage);
+            if (!storage.isVisited(level, neighborPos) && storage.getElementAt(level, neighborPos) == null) {
+                spreadElementToPosition(element, neighborPos, storage, level);
             }
         }
     }
 
-    private void spreadElementToPosition(BasicElement sourceElement, BlockPos targetPos, AllElementsWorldStorage storage) {
-        storage.addElement(sourceElement.getSpreadElement(targetPos), tick);
-
+    private void spreadElementToPosition(BasicElement sourceElement, BlockPos targetPos, AllElementsWorldStorage storage, ServerLevel level) {
+        storage.addElement(level, sourceElement.getSpreadElement(targetPos), tick);
     }
+
+    public int getTick() {
+        return tick;
+    }
+
 }

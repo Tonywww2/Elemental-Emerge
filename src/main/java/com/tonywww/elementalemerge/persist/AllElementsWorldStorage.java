@@ -1,7 +1,11 @@
 package com.tonywww.elementalemerge.persist;
 
 import com.tonywww.elementalemerge.elements.BasicElement;
+import com.tonywww.elementalemerge.event.TickHandler;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import org.cyclops.cyclopscore.init.ModBase;
 import org.cyclops.cyclopscore.persist.nbt.NBTPersist;
 import org.cyclops.cyclopscore.persist.world.WorldStorage;
@@ -13,28 +17,23 @@ public class AllElementsWorldStorage extends WorldStorage {
     private static AllElementsWorldStorage INSTANCE = null;
 
     private static final int RESET_TICKS = 40;
-    private static final int RESET_POS_INIT_CAP = 64;
+    private static final int RESET_POS_INIT_CAP = 256;
 
+    // 按维度分组的所有元素
     @NBTPersist
-    private Map<BlockPos, BasicElement> allElements = new HashMap<>();
+    private Map<ResourceKey<Level>, Map<BlockPos, BasicElement>> allElements = new HashMap<>();
 
-    // 待处理的元素
+    // 按维度分组的待处理元素
     @NBTPersist
-    private Stack<BasicElement> processingStack = new Stack<>();
+    private Map<ResourceKey<Level>, Stack<BasicElement>> processingStacks = new HashMap<>();
 
-    // 已访问的位置
+    // 按维度分组的已访问位置
     @NBTPersist
-    private Set<BlockPos> visitedPositions = new HashSet<>();
+    private Map<ResourceKey<Level>, Set<BlockPos>> visitedPositions = new HashMap<>();
 
-    // 将在RESET_TICKS后重置的位置
+    // 按维度分组的待重置位置
     @NBTPersist
-    private List<BlockPos>[] toResetPositions = new ArrayList[RESET_TICKS + 1];
-    {
-        for (int i = 0; i <= RESET_TICKS; i++) {
-            toResetPositions[i] = new ArrayList<>(RESET_POS_INIT_CAP);
-        }
-    }
-
+    private Map<ResourceKey<Level>, List<BlockPos>[]> toResetPositions = new HashMap<>();
 
     public AllElementsWorldStorage(ModBase mod) {
         super(mod);
@@ -47,74 +46,100 @@ public class AllElementsWorldStorage extends WorldStorage {
         return INSTANCE;
     }
 
-    public synchronized void addElement(BasicElement element, int tick) {
-        this.addElementToMap(element);
-        this.pushElementToProcessingStack(element);
-        this.getToResetPositions(tick).add(element.pos);
-    }
+    private void initializeDimension(ResourceKey<Level> dimension) {
+        if (!allElements.containsKey(dimension)) {
+            allElements.put(dimension, new HashMap<>());
+            processingStacks.put(dimension, new Stack<>());
+            visitedPositions.put(dimension, new HashSet<>());
 
-    public synchronized void resetPositions(int tick) {
-        List<BlockPos> positions = this.getToResetPositions(tick);
-        for (BlockPos pos : positions) {
-            this.markAsNotVisited(pos);
+            List<BlockPos>[] resetArray = new ArrayList[RESET_TICKS + 1];
+            for (int i = 0; i <= RESET_TICKS; i++) {
+                resetArray[i] = new ArrayList<>(RESET_POS_INIT_CAP);
+            }
+            toResetPositions.put(dimension, resetArray);
         }
-        this.resetToResetPositions(tick);
     }
 
-
-    public synchronized boolean isVisited(BlockPos pos) {
-        return visitedPositions.contains(pos);
+    public synchronized void addElement(ServerLevel level, BasicElement element) {
+        addElement(level, element, TickHandler.getInstance().getTick());
     }
 
-    public synchronized BasicElement getElementAt(BlockPos pos) {
-        return allElements.get(pos);
+    public synchronized void addElement(ServerLevel level, BasicElement element, int tick) {
+        ResourceKey<Level> dimension = level.dimension();
+        initializeDimension(dimension);
+
+        this.addElementToMap(dimension, element);
+        this.pushElementToProcessingStack(dimension, element);
+        this.getToResetPositions(dimension, tick).add(element.pos);
     }
 
-    public synchronized BasicElement popElementFromProcessingStack() {
-        if (hasElementsToProcess()) {
-            return this.processingStack.pop();
+    public synchronized void resetPositions(ServerLevel level, int tick) {
+        ResourceKey<Level> dimension = level.dimension();
+        initializeDimension(dimension);
+
+        List<BlockPos> positions = this.getToResetPositions(dimension, tick);
+        for (BlockPos pos : positions) {
+            this.markAsNotVisited(dimension, pos);
+        }
+        this.resetToResetPositions(dimension, tick);
+    }
+
+    public synchronized boolean isVisited(ServerLevel level, BlockPos pos) {
+        ResourceKey<Level> dimension = level.dimension();
+        initializeDimension(dimension);
+        return visitedPositions.get(dimension).contains(pos);
+    }
+
+    public synchronized BasicElement getElementAt(ServerLevel level, BlockPos pos) {
+        ResourceKey<Level> dimension = level.dimension();
+        initializeDimension(dimension);
+        return allElements.get(dimension).get(pos);
+    }
+
+    public synchronized BasicElement popElementFromProcessingStack(ServerLevel level) {
+        ResourceKey<Level> dimension = level.dimension();
+        initializeDimension(dimension);
+
+        Stack<BasicElement> stack = processingStacks.get(dimension);
+        if (!stack.isEmpty()) {
+            return stack.pop();
         }
         return null;
     }
 
-    public synchronized void markAsVisited(BlockPos pos) {
-        visitedPositions.add(pos);
+    public synchronized void markAsVisited(ServerLevel level, BlockPos pos) {
+        ResourceKey<Level> dimension = level.dimension();
+        initializeDimension(dimension);
+        visitedPositions.get(dimension).add(pos);
     }
 
-    private synchronized BasicElement removeElementFromMap(BlockPos pos) {
-        return this.allElements.remove(pos);
+    private synchronized List<BlockPos> getToResetPositions(ResourceKey<Level> dimension, int tick) {
+        return this.toResetPositions.get(dimension)[tick % (RESET_TICKS + 1)];
     }
 
-    private synchronized List<BlockPos> getToResetPositions(int tick) {
-        return this.toResetPositions[tick % (RESET_TICKS + 1)];
+    private synchronized void resetToResetPositions(ResourceKey<Level> dimension, int tick) {
+        this.toResetPositions.get(dimension)[tick % (RESET_TICKS + 1)] = new ArrayList<>(RESET_POS_INIT_CAP);
     }
 
-    private synchronized void resetToResetPositions(int tick) {
-        this.toResetPositions[tick % (RESET_TICKS + 1)] = new ArrayList<>(RESET_POS_INIT_CAP);
+    private synchronized void addElementToMap(ResourceKey<Level> dimension, BasicElement element) {
+        this.allElements.get(dimension).put(element.pos, element);
     }
 
-    private synchronized void addElementToMap(BasicElement element) {
-        this.allElements.put(element.pos, element);
+    private synchronized void pushElementToProcessingStack(ResourceKey<Level> dimension, BasicElement element) {
+        this.processingStacks.get(dimension).push(element);
     }
 
-    private synchronized void pushElementToProcessingStack(BasicElement element) {
-        this.processingStack.push(element);
+    private synchronized void markAsNotVisited(ResourceKey<Level> dimension, BlockPos pos) {
+        visitedPositions.get(dimension).remove(pos);
+        allElements.get(dimension).remove(pos);
     }
-
-    public synchronized boolean hasElementsToProcess() {
-        return !processingStack.isEmpty();
-    }
-
-    private synchronized void markAsNotVisited(BlockPos pos) {
-        visitedPositions.remove(pos);
-    }
-
 
     @Override
     public void reset() {
         this.allElements.clear();
-        this.processingStack.clear();
+        this.processingStacks.clear();
         this.visitedPositions.clear();
+        this.toResetPositions.clear();
     }
 
     @Override

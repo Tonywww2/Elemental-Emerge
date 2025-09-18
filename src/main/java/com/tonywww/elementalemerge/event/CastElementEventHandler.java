@@ -11,6 +11,8 @@ public class CastElementEventHandler {
     @SubscribeEvent
     public static void onCastElement(CastElementEvent event) {
         AllElementsWorldStorage.getInstance(ElementalEmerge._instance)
-                .addElement(event.getElement(), (int) event.getElement().level.getGameTime());
+                .addElement(event.getElement().level,
+                        event.getElement()
+                );
     }
 }
