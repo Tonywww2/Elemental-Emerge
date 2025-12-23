@@ -1,6 +1,7 @@
 package com.tonywww.elementalemerge.block;
 
 import com.tonywww.elementalemerge.elements.ElementType;
+import com.tonywww.elementalemerge.registeries.ModParticles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -50,7 +51,7 @@ public class BlockTestChargeable extends Block implements ElementChargeableBlock
             BlockState newState = ElementChargeableBlock.setAge(state, age - 1);
             serverLevel.setBlock(pos, newState, 3);
             serverLevel.sendParticles(
-                    ParticleTypes.FLAME,
+                    ModParticles.ELECTRIC_PARTICLE.get(),
                     pos.getX(),
                     pos.getY(),
                     pos.getZ(),
@@ -69,11 +70,30 @@ public class BlockTestChargeable extends Block implements ElementChargeableBlock
         int age = ElementChargeableBlock.getAge(state);
         ElementType elementType = ElementChargeableBlock.getElementType(state);
 
-        if (age > 0 && elementType != ElementType.NONE) {
-            level.addParticle(ParticleTypes.FLAME,
-                    pos.getX() + 0.5d, pos.getY() + 0.5d, pos.getZ() + 0.5d,
-                    0d, 0.05d, 0d);
+        if (
+                age > 0 &&
+                        (((int) level.getGameTime()) % (20 / age)) == 0 &&
+                        elementType != ElementType.NONE
+        ) {
+            double x = pos.getX();
+            double y = pos.getY();
+            double z = pos.getZ();
+
+            double[][] midpoints = {
+                    {x + 0.5, y, z}, {x + 0.5, y + 1, z}, {x + 0.5, y, z + 1}, {x + 0.5, y + 1, z + 1},
+                    {x, y + 0.5, z}, {x + 1, y + 0.5, z}, {x, y + 0.5, z + 1}, {x + 1, y + 0.5, z + 1},
+                    {x, y, z + 0.5}, {x + 1, y, z + 0.5}, {x, y + 1, z + 0.5}, {x + 1, y + 1, z + 0.5}
+            };
+
+            for (double[] tPos : midpoints) {
+                level.addParticle(
+//                            ModParticles.ELECTRIC_PARTICLE.get(),
+                        ParticleTypes.FLAME,
+                        tPos[0], tPos[1], tPos[2],
+                        0d, 0d, 0d);
+            }
         }
+
 
         super.animateTick(state, level, pos, randomSource);
     }

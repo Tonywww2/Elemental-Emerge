@@ -3,7 +3,6 @@ package com.tonywww.elementalemerge.block;
 import com.tonywww.elementalemerge.elements.ElementType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
-import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraftforge.common.extensions.IForgeBlock;
 
@@ -46,12 +45,5 @@ public interface ElementChargeableBlock extends IForgeBlock {
      */
     static boolean isCharged(BlockState state) {
         return getElementType(state) != ElementType.NONE;
-    }
-
-    /**
-     * 在实现类中需要重写此方法来添加状态属性
-     */
-    default void createElementBlockStateDefinition(StateDefinition.Builder<?, ?> builder) {
-        builder.add(ELEMENT_TYPE);
     }
 }

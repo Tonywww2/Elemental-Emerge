@@ -1,11 +1,10 @@
 package com.tonywww.elementalemerge.elements;
 
 import com.tonywww.elementalemerge.block.ElementChargeableBlock;
+import com.tonywww.elementalemerge.registeries.ModParticles;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class ElectricElement extends BasicElement {
@@ -22,11 +21,11 @@ public class ElectricElement extends BasicElement {
 //
 //        }
         if (this.level.getBlockState(this.pos).getBlock() instanceof ElementChargeableBlock) {
-            BlockState newState = ElementChargeableBlock.setElementType(this.level.getBlockState(this.pos), ElementType.ELECTRIC, 1);
+            BlockState newState = ElementChargeableBlock.setElementType(this.level.getBlockState(this.pos), ElementType.ELECTRIC, 4);
             level.setBlock(pos, newState, 3);
         }
         this.level.sendParticles(
-                ParticleTypes.SMOKE,
+                ModParticles.ELECTRIC_PARTICLE.get(),
                 this.pos.getX(),
                 this.pos.getY(),
                 this.pos.getZ(),

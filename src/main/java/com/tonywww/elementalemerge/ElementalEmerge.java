@@ -6,6 +6,7 @@ import com.tonywww.elementalemerge.persist.AllElementsWorldStorage;
 import com.tonywww.elementalemerge.registeries.ModBlocks;
 import com.tonywww.elementalemerge.registeries.ModCreativeModTabs;
 import com.tonywww.elementalemerge.registeries.ModItems;
+import com.tonywww.elementalemerge.registeries.ModParticles;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -32,6 +33,7 @@ public class ElementalEmerge extends ModBaseVersionable<ElementalEmerge> {
 
     public static ElementalEmerge _instance;
 
+    @SuppressWarnings("removal")
     public ElementalEmerge() {
         super(MOD_ID, (instance) -> _instance = instance);
 
@@ -39,6 +41,7 @@ public class ElementalEmerge extends ModBaseVersionable<ElementalEmerge> {
 
         ModItems.register(eventBus);
         ModBlocks.register(eventBus);
+        ModParticles.register(eventBus);
         ModCreativeModTabs.register(eventBus);
 
     }
