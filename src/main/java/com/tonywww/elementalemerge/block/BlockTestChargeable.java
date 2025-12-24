@@ -51,7 +51,7 @@ public class BlockTestChargeable extends Block implements ElementChargeableBlock
             BlockState newState = ElementChargeableBlock.setAge(state, age - 1);
             serverLevel.setBlock(pos, newState, 3);
             serverLevel.sendParticles(
-                    ModParticles.ELECTRIC_PARTICLE.get(),
+                    ElementChargeableBlock.getElementType(state).getParticleOption(),
                     pos.getX(),
                     pos.getY(),
                     pos.getZ(),
@@ -87,8 +87,7 @@ public class BlockTestChargeable extends Block implements ElementChargeableBlock
 
             for (double[] tPos : midpoints) {
                 level.addParticle(
-//                            ModParticles.ELECTRIC_PARTICLE.get(),
-                        ParticleTypes.FLAME,
+                        elementType.getParticleOption(),
                         tPos[0], tPos[1], tPos[2],
                         0d, 0d, 0d);
             }

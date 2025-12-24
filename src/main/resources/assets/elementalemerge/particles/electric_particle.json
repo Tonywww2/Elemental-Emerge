@@ -1,12 +1,13 @@
 {
   "textures": [
-    "elementalemerge:particle/electric_particle_0",
-    "elementalemerge:particle/electric_particle_1",
-    "elementalemerge:particle/electric_particle_2",
-    "elementalemerge:particle/electric_particle_3",
-    "elementalemerge:particle/electric_particle_4",
-    "elementalemerge:particle/electric_particle_5",
-    "elementalemerge:particle/electric_particle_6",
-    "elementalemerge:particle/electric_particle_7"
+    "elementalemerge:electric_particle",
+    "elementalemerge:electric_particle_0",
+    "elementalemerge:electric_particle_1",
+    "elementalemerge:electric_particle_2",
+    "elementalemerge:electric_particle_3",
+    "elementalemerge:electric_particle_4",
+    "elementalemerge:electric_particle_5",
+    "elementalemerge:electric_particle_6",
+    "elementalemerge:electric_particle_7"
   ]
 }

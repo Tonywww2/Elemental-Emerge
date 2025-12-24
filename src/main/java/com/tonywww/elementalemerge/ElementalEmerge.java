@@ -29,7 +29,7 @@ public class ElementalEmerge extends ModBaseVersionable<ElementalEmerge> {
     // Define mod id in a common place for everything to reference
     public static final String MOD_ID = "elementalemerge";
     // Directly reference a slf4j logger
-    private static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = LogUtils.getLogger();
 
     public static ElementalEmerge _instance;
 
@@ -39,10 +39,14 @@ public class ElementalEmerge extends ModBaseVersionable<ElementalEmerge> {
 
         IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
+        eventBus.addListener(this::clientSetup);
+
         ModItems.register(eventBus);
         ModBlocks.register(eventBus);
-        ModParticles.register(eventBus);
+
         ModCreativeModTabs.register(eventBus);
+
+        ModParticles.registerCommon(eventBus);
 
     }
 
@@ -70,14 +74,16 @@ public class ElementalEmerge extends ModBaseVersionable<ElementalEmerge> {
         return new CommonProxy();
     }
 
-    // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
-    @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static class ClientModEvents {
-        @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event) {
-            // Some client setup code
-            LOGGER.info("HELLO FROM CLIENT SETUP");
-            LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
-        }
+    @SuppressWarnings("removal")
+    public void clientSetup(final FMLClientSetupEvent event) {
+        // Some client setup code
+        LOGGER.info("HELLO FROM CLIENT SETUP");
+        LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
+
+        IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
+        event.enqueueWork(() -> {
+            ModParticles.registerClient(bus);
+
+        });
     }
 }
